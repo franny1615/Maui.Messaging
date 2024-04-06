@@ -8,11 +8,6 @@ Very little work is needed to implement this functionality on client or server s
 
 Below are some screenshots of running project from each client pov:
 
-Simple Login, asks user for some string that identified them:
 ![login](/Screenshots/SimpleLogin.png)
-
-Fictious Dave POV
 ![Daves POV](/Screenshots/DavePOV.png)
-
-Fictious John POV
 ![John POV](/Screenshots/JohnPOV.png)
