@@ -12,6 +12,8 @@ public class ChatMessage
     public string Message { get; set; } = string.Empty;
     [JsonPropertyName("sentOn")]
     public DateTime? SentOn { get; set; }
+    [JsonPropertyName("channel")]
+    public int Channel { get; set; } = 0;
 
     public string SentOnStr => $"{SentOn:F}";
     public Thickness Margin => User == SessionService.Username ? 

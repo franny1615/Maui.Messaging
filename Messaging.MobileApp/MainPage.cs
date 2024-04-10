@@ -1,5 +1,6 @@
 using Messaging.MobileApp.Models;
 using Messaging.MobileApp.Services;
+using Messaging.MobileApp.Pages;
 
 namespace Messaging.MobileApp;
 
@@ -51,7 +52,7 @@ public class MainPage : ContentPage
 		}
 		else 
 		{
-			await Navigation.PushAsync(new ChatsPage());
+			await Navigation.PushAsync(new ChannelsPage());
 		}		
 	} 
 }

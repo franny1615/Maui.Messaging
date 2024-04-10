@@ -1,12 +1,13 @@
 using System.Collections.ObjectModel;
+using CommunityToolkit.Maui.Behaviors;
 using Messaging.MobileApp.Models;
 using Messaging.MobileApp.Services;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Maui.Controls.Shapes;
 
-namespace Messaging.MobileApp;
+namespace Messaging.MobileApp.Pages;
 
-public class ChatsPage : ContentPage
+public class ChatPage : ContentPage
 {
 	public ObservableCollection<ChatMessage> AllMessages { get; set; } = [];
 
@@ -21,7 +22,6 @@ public class ChatsPage : ContentPage
 		Placeholder = "Type your message"
 	};
 	private readonly CollectionView _MessageCollection = new();
-	private bool _Connected = false;
 	private readonly Grid _ContentLayout = new()
 	{
 		Padding = 8,
@@ -31,9 +31,12 @@ public class ChatsPage : ContentPage
 			new RowDefinition { Height = GridLength.Auto }
 		},
 	};
+	private int _Channel = 0;
+	private bool _Connected = false;
 
-	public ChatsPage()
+	public ChatPage(int channel)
 	{
+		_Channel = channel;
 		_HubConnection = new HubConnectionBuilder()
 			.WithUrl($"{SessionService.APIUrl}/chat")
 			.Build();
@@ -87,6 +90,14 @@ public class ChatsPage : ContentPage
 			messageLabel.SetBinding(Label.TextProperty, "Message");
 			timeLabel.SetBinding(Label.TextProperty, "SentOnStr");
 
+			border.Behaviors.Add(new TouchBehavior
+			{
+				DefaultAnimationDuration = 250,
+				DefaultAnimationEasing = Easing.CubicInOut,
+				PressedOpacity = 0.75,
+				PressedScale = 0.95
+			});
+
 			return new Grid 
 			{
 				Children = { border }
@@ -110,19 +121,22 @@ public class ChatsPage : ContentPage
 		_ContentLayout.Add(msgGrid, 0, 1);
 		Content = _ContentLayout;
 
-		_HubConnection.On<string, string, DateTime>("ReceiveMessage", (user, message, sentOn) =>
+		_HubConnection.On<string, string, DateTime, int>("ReceiveMessage", (user, message, sentOn, channel) =>
 		{
-			AllMessages.Add(new ChatMessage
+			if (channel == _Channel)
 			{
-				User = user,
-				Message = message,
-				SentOn = sentOn
-			});
+				AllMessages.Add(new ChatMessage
+				{
+					User = user,
+					Message = message,
+					SentOn = sentOn
+				});
+			}
 		});
 
 		_Send.Clicked += Send_Clicked;
 	}
-	~ChatsPage()
+	~ChatPage()
 	{
 		_Send.Clicked -= Send_Clicked;
 	}
@@ -162,7 +176,10 @@ public class ChatsPage : ContentPage
 		var messages = (await NetworkService.Get<List<ChatMessage>>("messages/all", [])) ?? [];
 		foreach(var message in messages)
 		{
-			AllMessages.Add(message);
+			if (message.Channel == _Channel) 
+			{
+				AllMessages.Add(message);
+			}
 		}
 	}
 
@@ -176,7 +193,7 @@ public class ChatsPage : ContentPage
 
 		try 
 		{
-			await _HubConnection.InvokeAsync("SendMessage", SessionService.Username, _Message.Text);
+			await _HubConnection.InvokeAsync("SendMessage", SessionService.Username, _Message.Text, _Channel);
 			_Message.Text = "";
 		}
 		catch (Exception ex)
